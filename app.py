@@ -20,9 +20,20 @@ st.set_page_config(layout = 'wide')
 load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+st.sidebar.markdown("Google API Key")
+
+st.sidebar.subheader(
+    "[Get your API key here](https://aistudio.google.com/app/apikey)"
+)
+user_api = st.sidebar.text_input(
+    "Enter Google API Key",
+    type="password"
+)
+if user_api:
+    GOOGLE_API_KEY = user_api
 
 if not GOOGLE_API_KEY:
-    st.error("Google API Key not found.")
+    st.warning("Please enter your Google API Key.")
     st.stop()
 
 model = ChatGoogleGenerativeAI(
@@ -269,11 +280,40 @@ k_value = st.sidebar.slider(
 )
 # ================= STEP 16 : PROCESS PDF =================
 
+# ================= STEP 16 : PROCESS PDF =================
+
+rag_chain = None
+
 if uploaded_file is not None:
-    ...
-    rag_chain = create_rag_chain(retriever)
+    # Create folder if it doesn't exist
+    save_dir = "uploaded_files"
+    os.makedirs(save_dir, exist_ok=True)
+
+    # Save uploaded PDF
+    pdf_path = os.path.join(save_dir, uploaded_file.name)
+
+    with open(pdf_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+
+    # Build RAG Pipeline
+    with st.spinner("Processing PDF..."):
+
+        documents = load_pdf(pdf_path)
+        chunks = split_pdf(documents)
+
+        embeddings = create_embeddings()
+        vectorstore = create_vectorstore(chunks, embeddings)
+
+        retriever = create_retriever(vectorstore, k_value)
+        rag_chain = create_rag_chain(retriever)
 
     st.success("PDF Processed Successfully ✅")
+# ============================================================
+# ================= STEP 17 : SELECT FEATURE ==================
+# ============================================================
+st.divider()
+
+if rag_chain:
 
     tab1, tab2, tab3, tab4 = st.tabs(
         [
@@ -283,63 +323,76 @@ if uploaded_file is not None:
             "📅 Study Planner"
         ]
     )
-# ============================================================
-# ================= STEP 17 : SELECT FEATURE ==================
-# ============================================================
+    # ================= NOTES =================
 
-tab1, tab2, tab3, tab4 = st.tabs(
-    [
-        "📄 Notes",
-        "📝 Quiz",
-        "💬 Doubt Solver",
-        "📅 Study Planner"
-    ]
-)
-st.divider()
+    with tab1:
 
-with tab1:
-    st.subheader("📄 Generate Study Notes")
-    if st.button("Generate Notes"):
-        with st.spinner("Generating Notes..."):
-            notes = generate_notes(rag_chain)
-        st.markdown(notes)
-        
-with tab2:
-    st.subheader("📝 Generate Quiz")
-    if st.button("Generate Quiz"):
-        with st.spinner("Generating Quiz..."):
-            quiz = generate_quiz(rag_chain)
-        st.markdown(quiz)
-        
-with tab3:
-    st.subheader("💬 Doubt Solver")
-    question = st.text_input(
-        "Ask your question"
-    )
-    if st.button("Get Answer"):
-        answer = solve_doubt(
-            rag_chain,
-            question
+        st.subheader("📄 Generate Study Notes")
+
+        if st.button("Generate Notes"):
+
+            with st.spinner("Generating Notes..."):
+
+                notes = generate_notes(rag_chain)
+
+            st.markdown(notes)
+
+    # ================= QUIZ =================
+
+    with tab2:
+
+        st.subheader("📝 Generate Quiz")
+
+        if st.button("Generate Quiz"):
+
+            with st.spinner("Generating Quiz..."):
+
+                quiz = generate_quiz(rag_chain)
+
+            st.markdown(quiz)
+
+    # ================= DOUBT SOLVER =================
+
+    with tab3:
+
+        st.subheader("💬 Doubt Solver")
+
+        question = st.text_input(
+            "Ask your question"
         )
-        st.markdown(answer)
-with tab4:
 
-    st.subheader("📅 Study Planner")
+        if st.button("Get Answer"):
 
-    subjects = st.text_input("Subjects")
+            answer = solve_doubt(
+                rag_chain,
+                question
+            )
 
-    exam_date = st.date_input("Exam Date")
+            st.markdown(answer)
 
-    study_hours = st.slider(
-        "Study Hours",
-        1,
-        12,
-        4
-    )
-    if st.button("Generate Study Plan"):
-        plan = generate_study_plan(
-            subjects,
-            exam_date,
-            study_hours
+    # ================= STUDY PLANNER =================
+
+    with tab4:
+
+        st.subheader("📅 Study Planner")
+
+        subjects = st.text_input("Subjects")
+
+        exam_date = st.date_input("Exam Date")
+
+        study_hours = st.slider(
+            "Study Hours",
+            1,
+            12,
+            4
         )
-        st.markdown(plan)
+
+        if st.button("Generate Study Plan"):
+
+            plan = generate_study_plan(
+                subjects,
+                exam_date,
+                study_hours
+            )
+
+            st.markdown(plan)
