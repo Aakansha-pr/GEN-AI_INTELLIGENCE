@@ -44,14 +44,6 @@ def load_model(api_key):
     )
 model = load_model(GOOGLE_API_KEY)
 
-try:
-    test = model.invoke("Say Hello")
-    st.success("Gemini Connected Successfully ✅")
-    st.write(test.content)
-except Exception as e:
-    st.exception(e)
-    st.stop()
-
 # =================== STEP 3 : PDF BACKEND FUNCTIONS ===================
 
 def load_pdf(pdf_path):
