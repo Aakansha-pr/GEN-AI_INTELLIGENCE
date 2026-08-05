@@ -1,4 +1,3 @@
-
 #              STUDYGEN AI - INTELLIGENT LEARNING ASSISTANT
 # ============================================================
 
@@ -22,11 +21,16 @@ load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
+if not GOOGLE_API_KEY:
+    st.error("Google API Key not found.")
+    st.stop()
+
 model = ChatGoogleGenerativeAI(
-    model="gemini-3.5-flash",
+    model="gemini-2.5-flash",
     google_api_key=GOOGLE_API_KEY
 )
-st.success("Model Loaded Successfully!!!")
+
+st.success("Gemini Model Loaded Successfully ✅")
 
 # =================== STEP 3 : PDF BACKEND FUNCTIONS ===================
 
@@ -82,24 +86,15 @@ def create_vectorstore(chunks, embeddings):
 
 # ================= STEP 7 : CREATE RETRIEVER =================
 
-def create_retriever(vectorstore):
-    """
-    This function creates the retriever from the vector database.
-    """
+def create_retriever(vectorstore, k_value):
 
     retriever = vectorstore.as_retriever(
-        search_kwargs={"k": 3}
+        search_kwargs={"k": k_value}
     )
 
     return retriever
 
-# ================= STEP 8 : LCEL COMPONENTS =================
-
-# ChatPromptTemplate
-# RunnablePassthrough
-# StrOutputParser
-
-# (Already imported in Step 1)
+retriever = create_retriever(vectorstore, k_value)
 
 # ================= STEP 9 : CREATE LCEL RAG CHAIN =================
 
@@ -107,7 +102,8 @@ def create_rag_chain(retriever):
     """
     This function creates the LCEL RAG Chain.
     """
-    prompt = ChatPromptTemplate.from_template("""
+    prompt = ChatPromptTemplate.from_template(
+        """
     You are StudyGen AI, an Intelligent Learning Assistant.
 
     Answer the user's question ONLY using the provided context.
@@ -119,7 +115,8 @@ def create_rag_chain(retriever):
     {context}
     Question:
     {question}
-    """)
+    """
+    )
 
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
@@ -133,10 +130,9 @@ def create_rag_chain(retriever):
         | model
         | StrOutputParser()
     )
-
     return rag_chain
 
-    # ================= STEP 10 : NOTES GENERATOR =================
+# ================= STEP 10 : NOTES GENERATOR =================
 
 def generate_notes(rag_chain):
     """
@@ -236,3 +232,117 @@ Instructions:
     response = model.invoke(prompt)
 
     return response.content
+
+# ============================================================
+# ============== STEP 14 : STREAMLIT USER INTERFACE ===========
+# ============================================================
+
+# ---------------------- PAGE TITLE -----------------------
+
+st.title("📚 StudyGen AI")
+st.subheader("Intelligent Learning Assistant")
+
+st.markdown(
+    """
+Welcome to **StudyGen AI**.
+
+Upload your study material and use AI to:
+
+- 📄 Generate Study Notes
+- 📝 Generate Quiz
+- 💬 Solve Doubts
+- 📅 Create a Personalized Study Planner
+"""
+)
+
+# ==================== STEP 15 : SIDEBAR ====================
+
+st.sidebar.title("📚 StudyGen AI")
+st.sidebar.markdown("### Upload your study material")
+
+uploaded_file = st.sidebar.file_uploader(
+    "Choose a PDF File",
+    type=["pdf"]
+)
+k_value = st.sidebar.slider(
+    "Retriever Top-K",
+    min_value=1,
+    max_value=10,
+    value=3
+)
+# ================= STEP 16 : PROCESS PDF =================
+
+if uploaded_file is not None:
+    ...
+    rag_chain = create_rag_chain(retriever)
+
+    st.success("PDF Processed Successfully ✅")
+
+    tab1, tab2, tab3, tab4 = st.tabs(
+        [
+            "📄 Notes",
+            "📝 Quiz",
+            "💬 Doubt Solver",
+            "📅 Study Planner"
+        ]
+    )
+# ============================================================
+# ================= STEP 17 : SELECT FEATURE ==================
+# ============================================================
+
+tab1, tab2, tab3, tab4 = st.tabs(
+    [
+        "📄 Notes",
+        "📝 Quiz",
+        "💬 Doubt Solver",
+        "📅 Study Planner"
+    ]
+)
+st.divider()
+
+with tab1:
+    st.subheader("📄 Generate Study Notes")
+    if st.button("Generate Notes"):
+        with st.spinner("Generating Notes..."):
+            notes = generate_notes(rag_chain)
+        st.markdown(notes)
+        
+with tab2:
+    st.subheader("📝 Generate Quiz")
+    if st.button("Generate Quiz"):
+        with st.spinner("Generating Quiz..."):
+            quiz = generate_quiz(rag_chain)
+        st.markdown(quiz)
+        
+with tab3:
+    st.subheader("💬 Doubt Solver")
+    question = st.text_input(
+        "Ask your question"
+    )
+    if st.button("Get Answer"):
+        answer = solve_doubt(
+            rag_chain,
+            question
+        )
+        st.markdown(answer)
+with tab4:
+
+    st.subheader("📅 Study Planner")
+
+    subjects = st.text_input("Subjects")
+
+    exam_date = st.date_input("Exam Date")
+
+    study_hours = st.slider(
+        "Study Hours",
+        1,
+        12,
+        4
+    )
+    if st.button("Generate Study Plan"):
+        plan = generate_study_plan(
+            subjects,
+            exam_date,
+            study_hours
+        )
+        st.markdown(plan)
