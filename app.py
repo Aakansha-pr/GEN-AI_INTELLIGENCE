@@ -36,10 +36,13 @@ if not GOOGLE_API_KEY:
     st.warning("Please enter your Google API Key.")
     st.stop()
 
-model = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    google_api_key=GOOGLE_API_KEY
-)
+@st.cache_resource
+def load_model(api_key):
+    return ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        google_api_key=api_key
+    )
+model = load_model(GOOGLE_API_KEY)
 
 st.success("Gemini Model Loaded Successfully ✅")
 
@@ -70,15 +73,11 @@ def split_pdf(documents):
 
 # ================= STEP 5 : CREATE EMBEDDINGS =================
 
+@st.cache_resource
 def create_embeddings():
-    """
-    This function loads the HuggingFace embedding model.
-    """
-
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
-
     return embeddings
 
 # ================= STEP 6 : CREATE VECTOR DATABASE =================
@@ -278,37 +277,38 @@ k_value = st.sidebar.slider(
     max_value=10,
     value=3
 )
-# ================= STEP 16 : PROCESS PDF =================
 
 # ================= STEP 16 : PROCESS PDF =================
+@st.cache_resource
+def build_rag(pdf_path, k_value):
+
+    documents = load_pdf(pdf_path)
+    chunks = split_pdf(documents)
+
+    embeddings = create_embeddings()
+    vectorstore = create_vectorstore(chunks, embeddings)
+    retriever = create_retriever(vectorstore, k_value)
+    return create_rag_chain(retriever)
 
 rag_chain = None
-
 if uploaded_file is not None:
-    # Create folder if it doesn't exist
+
     save_dir = "uploaded_files"
     os.makedirs(save_dir, exist_ok=True)
 
-    # Save uploaded PDF
     pdf_path = os.path.join(save_dir, uploaded_file.name)
-
     with open(pdf_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
 
-    # Build RAG Pipeline
-    with st.spinner("Processing PDF..."):
+    try:
+        with st.spinner("Processing PDF..."):
+            rag_chain = build_rag(pdf_path, k_value)
 
-        documents = load_pdf(pdf_path)
-        chunks = split_pdf(documents)
+        st.success("PDF Processed Successfully ✅")
 
-        embeddings = create_embeddings()
-        vectorstore = create_vectorstore(chunks, embeddings)
-
-        retriever = create_retriever(vectorstore, k_value)
-        rag_chain = create_rag_chain(retriever)
-
-    st.success("PDF Processed Successfully ✅")
-# ============================================================
+    except Exception as e:
+        st.exception(e)
+        
 # ================= STEP 17 : SELECT FEATURE ==================
 # ============================================================
 st.divider()
