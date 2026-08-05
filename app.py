@@ -17,32 +17,19 @@ from langchain_core.runnables import RunnablePassthrough
 
 st.set_page_config(layout = 'wide')
 # ============== STEP 2 : LOAD API KEY ===========
-load_dotenv()
+#====================STEP 2 API KEYS======================
+st.set_page_config(page_title = "Chat-With-PDF",
+              layout = "wide")
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-st.sidebar.markdown("Google API Key")
+st.sidebar.title("SET API CONFIG")
+st.title("RAG Based Chat With PDF 📚")
+GOOGLE_API_KEY = st.sidebar.text_input("GOOGLE_API_KEY",type = "password")
+os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
-st.sidebar.subheader(
-    "[Get your API key here](https://aistudio.google.com/app/apikey)"
-)
-user_api = st.sidebar.text_input(
-    "Enter Google API Key",
-    type="password"
-)
-if user_api:
-    GOOGLE_API_KEY = user_api
-
-if not GOOGLE_API_KEY:
-    st.warning("Please enter your Google API Key.")
-    st.stop()
-
-@st.cache_resource
-def load_model(api_key):
-    return ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-lite",
-        google_api_key=api_key
-    )
-model = load_model(GOOGLE_API_KEY)
+if GOOGLE_API_KEY:
+  st.sidebar.success("API key Loaded!!")
+else:
+  st.sidebar.info("Give API key")
 
 # =================== STEP 3 : PDF BACKEND FUNCTIONS ===================
 
