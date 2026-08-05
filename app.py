@@ -4,19 +4,20 @@
 # ==============STEP 1: IMPORT LIBRARIES ================
 
 import os
-import streamlit as st
-from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+import streamlit as st
+import numpy
+import time
+from PIL import Image
+from dotenv import load_dotenv
 
-st.set_page_config(layout = 'wide')
-# ============== STEP 2 : LOAD API KEY ===========
 #====================STEP 2 API KEYS======================
 st.set_page_config(page_title = "Chat-With-PDF",
               layout = "wide")
@@ -31,15 +32,18 @@ if GOOGLE_API_KEY:
 else:
   st.sidebar.info("Give API key")
 
-# =================== STEP 3 : PDF BACKEND FUNCTIONS ===================
+if GOOGLE_API_KEY:
+    model = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash-lite",
+        google_api_key=GOOGLE_API_KEY
+    )
+else:
+    st.stop()
 
+# =================== STEP 3 : PDF BACKEND FUNCTIONS ===================
 def load_pdf(pdf_path):
-    """
-    This function loads the uploaded PDF.
-    """
     loader = PyPDFLoader(pdf_path)
     documents = loader.load()
-
     return documents
   
 # =================== STEP 4 : CREATE TEXT CHUNKS ===================
@@ -58,6 +62,19 @@ def split_pdf(documents):
 
 # ================= STEP 5 : CREATE EMBEDDINGS =================
 
+def create_vectorstore(chunks, embeddings):
+    vectorstore = FAISS.from_documents(
+        chunks,
+        embeddings
+    )
+    return vectorstore
+
+def create_retriever(vectorstore, k_value):
+    retriever = vectorstore.as_retriever(
+        search_kwargs={"k": k_value}
+    )
+    return retriever
+  
 @st.cache_resource
 def create_embeddings():
     embeddings = HuggingFaceEmbeddings(
@@ -65,29 +82,6 @@ def create_embeddings():
     )
     return embeddings
 
-# ================= STEP 6 : CREATE VECTOR DATABASE =================
-
-def create_vectorstore(chunks, embeddings):
-    """
-    This function creates the FAISS vector database.
-    """
-
-    vectorstore = FAISS.from_documents(
-        chunks,
-        embeddings
-    )
-
-    return vectorstore
-
-# ================= STEP 7 : CREATE RETRIEVER =================
-
-def create_retriever(vectorstore, k_value):
-
-    retriever = vectorstore.as_retriever(
-        search_kwargs={"k": k_value}
-    )
-    return retriever
-    
 # ================= STEP 9 : CREATE LCEL RAG CHAIN =================
 
 def create_rag_chain(retriever):
@@ -264,7 +258,6 @@ k_value = st.sidebar.slider(
 )
 
 # ================= STEP 16 : PROCESS PDF =================
-@st.cache_resource
 def build_rag(pdf_path, k_value):
 
     documents = load_pdf(pdf_path)
@@ -290,6 +283,7 @@ if uploaded_file is not None:
             rag_chain = build_rag(pdf_path, k_value)
 
         st.success("PDF Processed Successfully ✅")
+        st.write("RAG Chain Built Successfully")
 
     except Exception as e:
         st.exception(e)
@@ -308,55 +302,69 @@ if rag_chain:
         ]
     )
     # ================= NOTES =================
-
     with tab1:
-
+    
         st.subheader("📄 Generate Study Notes")
-
+    
         if st.button("Generate Notes"):
-
+    
             with st.spinner("Generating Notes..."):
-
-                notes = generate_notes(rag_chain)
-
-            if notes:
-                st.markdown(notes)
-
-    # ================= QUIZ =================
-
+    
+                    st.write_stream(
+                    rag_chain.stream("""
+    Generate well-structured study notes from the uploaded study material.
+    
+    Include the following sections:
+    
+    1. Introduction
+    2. Key Concepts
+    3. Important Definitions
+    4. Key Points
+    5. Examples (if available)
+    6. Summary
+    
+    Use simple language.
+    Format the output using headings and bullet points.
+    """)
+                )
+      # ================= QUIZ =================
     with tab2:
-
+    
         st.subheader("📝 Generate Quiz")
-
+    
         if st.button("Generate Quiz"):
-
+    
             with st.spinner("Generating Quiz..."):
-
-                quiz = generate_quiz(rag_chain)
-
-            st.markdown(quiz)
-
-    # ================= DOUBT SOLVER =================
-
+    
+                st.write_stream(
+                    rag_chain.stream("""
+    Generate a quiz from the uploaded study material.
+    
+    Instructions:
+    - Generate exactly 10 Multiple Choice Questions (MCQs).
+    - Each question should have four options:
+    A)
+    B)
+    C)
+    D)
+    - Mention the correct answer after each question.
+    - Provide a short explanation for the correct answer.
+    """)
+                )
+      # ================= DOUBT SOLVER =================
     with tab3:
-
+    
         st.subheader("💬 Doubt Solver")
-
-        question = st.text_input(
-            "Ask your question"
-        )
-
+    
+        question = st.text_input("Ask your question")
+    
         if st.button("Get Answer"):
-
-            answer = solve_doubt(
-                rag_chain,
-                question
-            )
-
-            st.markdown(answer)
-
-    # ================= STUDY PLANNER =================
-
+    
+            with st.spinner("Generating Answer..."):
+    
+                st.write_stream(rag_chain.stream(question))
+      # ================= STUDY PLANNER =================
+  
     with tab4:
 
         st.subheader("📅 Study Planner")
