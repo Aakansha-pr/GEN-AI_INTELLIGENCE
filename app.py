@@ -140,10 +140,7 @@ def create_rag_chain(retriever):
 # ================= STEP 10 : NOTES GENERATOR =================
 
 def generate_notes(rag_chain):
-    """
-    This function generates well-structured study notes
-    from the uploaded PDF.
-    """
+
     prompt = """
 Generate well-structured study notes from the uploaded study material.
 
@@ -160,10 +157,13 @@ Use simple language.
 Format the output using headings and bullet points.
 """
 
-    notes = rag_chain.invoke(prompt)
+    try:
+        notes = rag_chain.invoke(prompt)
+        return notes
 
-    return notes
-
+    except Exception as e:
+        st.exception(e)
+        return None
 # ================= STEP 11 : QUIZ GENERATOR =================
 
 def generate_quiz(rag_chain):
@@ -308,7 +308,6 @@ if uploaded_file is not None:
         st.exception(e)
         
 # ================= STEP 17 : SELECT FEATURE ==================
-# ============================================================
 st.divider()
 
 if rag_chain:
@@ -333,7 +332,8 @@ if rag_chain:
 
                 notes = generate_notes(rag_chain)
 
-            st.markdown(notes)
+            if notes:
+                st.markdown(notes)
 
     # ================= QUIZ =================
 
