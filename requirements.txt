@@ -1,0 +1,17 @@
+langchain
+langchain-google-genai
+langchain-groq
+langchain-huggingface
+sentence-transformers
+faiss-cpu
+pypdf
+python-dotenv
+langchain-core
+langchain-text-splitters
+google-generativeai
+tavily-python
+streamlit
+numpy
+pandas
+matplotlib
+seaborn
