@@ -39,7 +39,7 @@ if not GOOGLE_API_KEY:
 @st.cache_resource
 def load_model(api_key):
     return ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-3.5-flash",
         google_api_key=api_key
     )
 model = load_model(GOOGLE_API_KEY)
