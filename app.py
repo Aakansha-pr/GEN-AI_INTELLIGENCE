@@ -91,11 +91,8 @@ def create_retriever(vectorstore, k_value):
     retriever = vectorstore.as_retriever(
         search_kwargs={"k": k_value}
     )
-
     return retriever
-
-retriever = create_retriever(vectorstore, k_value)
-
+    
 # ================= STEP 9 : CREATE LCEL RAG CHAIN =================
 
 def create_rag_chain(retriever):
