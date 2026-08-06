@@ -502,13 +502,12 @@ st.markdown(notes)
 
     # ================= STUDY PLANNER =================
 
-# ================= STUDY PLANNER =================
-
     with tab4:
     
         st.subheader("📅 Study Planner")
     
         subjects = st.text_input("Subjects")
+    
         exam_date = st.date_input("Exam Date")
     
         study_hours = st.slider(
@@ -527,14 +526,14 @@ st.markdown(notes)
             )
     
             st.markdown(plan)
-
+    
             st.download_button(
                 "⬇ Download Study Plan (.md)",
                 plan,
                 file_name="Study_Plan.md",
                 mime="text/markdown"
             )
-
+    
             st.download_button(
                 "⬇ Download Study Plan (.docx)",
                 create_doc(plan),
