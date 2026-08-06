@@ -333,6 +333,38 @@ k_value = st.sidebar.slider(
     value=3
 )
 
+st.sidebar.divider()
+
+st.sidebar.markdown("## ℹ️ About")
+
+st.sidebar.info("""
+📚 **StudyGen AI**
+
+An AI-powered Intelligent Learning Assistant that transforms PDF study material into:
+
+• 📄 Smart Notes
+
+• 📝 AI Quizzes
+
+• 💬 Doubt Resolution
+
+• 📅 Personalized Study Plans
+
+**Tech Stack**
+
+🤖 Gemini
+
+🔗 LangChain
+
+🧠 FAISS
+
+🤗 HuggingFace
+
+🐍 Python
+
+🎨 Streamlit
+""")
+
 # ================= STEP 16 : PROCESS PDF =================
 def build_rag(pdf_path, k_value):
 
