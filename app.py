@@ -158,12 +158,13 @@ Generate a quiz from the uploaded study material.
 
 Instructions:
 - Generate exactly 10 Multiple Choice Questions (MCQs).
-- Each question should have four options:
+- Each question should have four options: in different lines:
   A)
   B)
   C)
   D)
-- Mention the correct answer after each question.
+- Mention the correct answer after each question in next line 
+with proper spacing to look presentable
 - Provide a short explanation for the correct answer.
 - Format the output using proper headings and numbering.
 """
@@ -178,6 +179,7 @@ def solve_doubt(rag_chain, question):
     """
     This function answers the user's question
     from the uploaded study material.
+    with proper spacing
     """
 
     answer = rag_chain.invoke(question)
@@ -213,6 +215,8 @@ Instructions:
 4. Reserve time for revision before the exam.
 5. Highlight high-priority subjects.
 6. Present the output using proper headings and bullet points.
+
+IN DIFFERENT LINES NO MESS UP. SHOULD LOOK PRESENTABLE
 """
 
     response = model.invoke(prompt)
