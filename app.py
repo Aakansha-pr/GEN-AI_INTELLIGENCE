@@ -385,23 +385,24 @@ if rag_chain:
         if st.button("Generate Notes"):
 
             with st.spinner("Generating Notes..."):
-
-                prompt = """
-Generate well-structured study notes from the uploaded study material.
-
-Include the following sections:
-
-1. Introduction
-2. Key Concepts
-3. Important Definitions
-4. Key Points
-5. Examples
-6. Summary
-
-Use Markdown headings and bullet points.
-"""
-              )
- )
+            
+                st.write_stream(
+                    rag_chain.stream("""
+            Generate well-structured study notes from the uploaded study material.
+            
+            Include the following sections:
+            
+            1. Introduction
+            2. Key Concepts
+            3. Important Definitions
+            4. Key Points
+            5. Examples (if available)
+            6. Summary
+            
+            Use simple language.
+            Format the output using headings and bullet points.
+            """)
+                )
 notes = rag_chain.invoke(prompt)
 st.markdown(notes)
 
@@ -501,29 +502,30 @@ st.markdown(notes)
 
     # ================= STUDY PLANNER =================
 
+# ================= STUDY PLANNER =================
+
     with tab4:
-
-        st.subheader("📅 Personalized Study Planner")
-
+    
+        st.subheader("📅 Study Planner")
+    
         subjects = st.text_input("Subjects")
-
         exam_date = st.date_input("Exam Date")
-
+    
         study_hours = st.slider(
             "Study Hours",
             1,
             12,
             4
         )
-
+    
         if st.button("Generate Study Plan"):
-
+    
             plan = generate_study_plan(
                 subjects,
                 exam_date,
                 study_hours
             )
-
+    
             st.markdown(plan)
 
             st.download_button(
