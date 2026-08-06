@@ -40,7 +40,7 @@ if GOOGLE_API_KEY:
     )
 else:
     st.stop()
-st.image("pg.png", use_container_width=True)
+
 # =================== STEP 3 : PDF BACKEND FUNCTIONS ===================
 def load_pdf(pdf_path):
     loader = PyPDFLoader(pdf_path)
@@ -243,22 +243,36 @@ IN DIFFERENT LINES NO MESS UP. SHOULD LOOK PRESENTABLE
 
 # ---------------------- PAGE TITLE -----------------------
 
+# ---------------------- PAGE TITLE -----------------------
+
 st.title("📚 StudyGen AI")
 st.subheader("Intelligent Learning Assistant")
 
 st.markdown(
-    """
+  """
 Welcome to **StudyGen AI**.
-
-Upload your study material and use AI to:
-
-- 📄 Generate Study Notes
-- 📝 Generate Quiz
-- 💬 Solve Doubts
-- 📅 Create a Personalized Study Planner
+Upload your study material and use AI to simplify learning.
 """
 )
 
+st.image("pg.png", use_container_width=True)
+
+st.divider()
+st.markdown("## ✨ Features")
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.info("📄\n\nGenerate Notes")
+
+with col2:
+    st.info("📝\n\nGenerate Quiz")
+
+with col3:
+    st.info("💬\n\nSolve Doubts")
+
+with col4:
+    st.info("📅\n\nStudy Planner")
 # ==================== STEP 15 : SIDEBAR ====================
 
 st.sidebar.title("📚 StudyGen AI")
