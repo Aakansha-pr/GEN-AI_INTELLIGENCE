@@ -504,46 +504,46 @@ Repeat for all 10 questions.
     # ================= STUDY PLANNER =================
 
     with tab4:
-
+    
         st.subheader("📅 Personalized Study Planner")
-
+    
         subjects = st.text_input("Subjects")
-
+    
         exam_date = st.date_input("Exam Date")
-
+    
         study_hours = st.slider(
             "Study Hours",
             1,
             12,
             4
         )
-
+    
         if st.button("Generate Study Plan"):
-
+    
             plan = generate_study_plan(
                 subjects,
                 exam_date,
                 study_hours
             )
-            st.write(type(plan))
-            st.write(plan)
-          
+    
+            # Display the formatted study plan
             st.markdown(plan)
-
+    
+            # Download as Markdown
             st.download_button(
-                label = "⬇ Download Study Plan (.md)",
-                data = plan,
+                label="⬇ Download Study Plan (.md)",
+                data=plan,
                 file_name="Study_Plan.md",
                 mime="text/markdown"
             )
-
+    
+            # Download as Word
             st.download_button(
-                label = "⬇ Download Study Plan (.docx)",
-                data = create_doc(plan),
+                label="⬇ Download Study Plan (.docx)",
+                data=create_doc(plan),
                 file_name="Study_Plan.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
-
 st.divider()
 
 st.caption(
