@@ -22,8 +22,8 @@ from dotenv import load_dotenv
 st.set_page_config(page_title = "GEN-AI INTELLIGENT LEARNING🎓",
               layout = "wide")
 
-st.sidebar.title("SET API CONFI")
-st.title("GEN-AI INTELLIGENT LEARNING")
+st.sidebar.title("SET API CONFIG")
+st.title("GEN-AI INTELLIGENT LEARNING💻")
 GOOGLE_API_KEY = st.sidebar.text_input("GOOGLE_API_KEY",type = "password")
 os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
