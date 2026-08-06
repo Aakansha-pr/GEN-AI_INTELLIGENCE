@@ -237,7 +237,7 @@ IN DIFFERENT LINES NO MESS UP. SHOULD LOOK PRESENTABLE
 
     response = model.invoke(prompt)
 
-    return response.content
+    return str(response.content)
   
 def create_doc(text):
 
@@ -525,19 +525,21 @@ Repeat for all 10 questions.
                 exam_date,
                 study_hours
             )
-
+            st.write(type(plan))
+            st.write(plan)
+          
             st.markdown(plan)
 
             st.download_button(
-                "⬇ Download Study Plan (.md)",
-                plan,
+                label = "⬇ Download Study Plan (.md)",
+                data = plan,
                 file_name="Study_Plan.md",
                 mime="text/markdown"
             )
 
             st.download_button(
-                "⬇ Download Study Plan (.docx)",
-                create_doc(plan),
+                label = "⬇ Download Study Plan (.docx)",
+                data = create_doc(plan),
                 file_name="Study_Plan.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
