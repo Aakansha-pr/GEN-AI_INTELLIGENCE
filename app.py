@@ -235,9 +235,17 @@ Instructions:
 IN DIFFERENT LINES NO MESS UP. SHOULD LOOK PRESENTABLE
 """
 
-    response = model.invoke(prompt)
-
-    return str(response.content)
+  response = model.invoke(prompt)
+  
+  if isinstance(response.content, list):
+      plan = "".join(
+          item["text"] if isinstance(item, dict) else item.text
+          for item in response.content
+      )
+  else:
+      plan = response.content
+  
+  return plan
   
 def create_doc(text):
 
@@ -527,7 +535,7 @@ Repeat for all 10 questions.
             )
     
             # Display the formatted study plan
-            st.markdown(plan)
+            st.write(plan)
     
             # Download as Markdown
             st.download_button(
