@@ -17,6 +17,8 @@ import numpy
 import time
 from PIL import Image
 from dotenv import load_dotenv
+from docx import Document
+import io
 
 #====================STEP 2 API KEYS======================
 st.set_page_config(page_title = "GEN-AI INTELLIGENT LEARNING🎓",
@@ -236,11 +238,20 @@ IN DIFFERENT LINES NO MESS UP. SHOULD LOOK PRESENTABLE
     response = model.invoke(prompt)
 
     return response.content
+  
+def create_doc(text):
 
+    doc = Document()
+    doc.add_heading("StudyGen AI", level=1)
+    doc.add_paragraph(text)
+
+    file = io.BytesIO()
+    doc.save(file)
+    file.seek(0)
+
+    return file
 # ============================================================
 # ============== STEP 14 : STREAMLIT USER INTERFACE ===========
-# ============================================================
-
 # ---------------------- PAGE TITLE -----------------------
 st.title("📚 StudyGen AI")
 st.subheader("Intelligent Learning Assistant")
@@ -353,9 +364,7 @@ if rag_chain:
     col1, col2, col3 = st.columns(3)
 
     col1.metric("AI Model", "Gemini")
-
     col2.metric("Retriever", f"Top {k_value}")
-
     col3.metric("PDF", "Loaded")
 
     tab1, tab2, tab3, tab4 = st.tabs(
@@ -366,73 +375,135 @@ if rag_chain:
             "📅 Personalized Study Planner"
         ]
     )
+
     # ================= NOTES =================
+
     with tab1:
-    
+
         st.subheader("📄 Generate Study Notes")
-    
+
         if st.button("Generate Notes"):
-    
+
             with st.spinner("Generating Notes..."):
-    
-                    st.write_stream(
-                    rag_chain.stream("""
-    Generate well-structured study notes from the uploaded study material.
-    
-    Include the following sections:
-    
-    1. Introduction
-    2. Key Concepts
-    3. Important Definitions
-    4. Key Points
-    5. Examples (if available)
-    6. Summary
-    
-    Use simple language.
-    Format the output using headings and bullet points.
-    """)
+
+                prompt = """
+Generate well-structured study notes from the uploaded study material.
+
+Include the following sections:
+
+1. Introduction
+2. Key Concepts
+3. Important Definitions
+4. Key Points
+5. Examples
+6. Summary
+
+Use Markdown headings and bullet points.
+"""
+              )
+ )
+notes = rag_chain.invoke(prompt)
+st.markdown(notes)
+
+                st.download_button(
+                    "⬇ Download Notes (.md)",
+                    notes,
+                    file_name="Study_Notes.md",
+                    mime="text/markdown"
                 )
-      # ================= QUIZ =================
+
+                st.download_button(
+                    "⬇ Download Notes (.docx)",
+                    create_doc(notes),
+                    file_name="Study_Notes.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
+
+    # ================= QUIZ =================
+
     with tab2:
-    
+
         st.subheader("📝 Generate Quiz")
-    
+
         if st.button("Generate Quiz"):
-    
+
             with st.spinner("Generating Quiz..."):
-    
-                st.write_stream(
-                    rag_chain.stream("""
-    Generate a quiz from the uploaded study material.
-    
-    Instructions:
-    - Generate exactly 10 Multiple Choice Questions (MCQs).
-    - Each question should have four options:
-    A)
-    B)
-    C)
-    D)
-    - Mention the correct answer after each question.
-    - Provide a short explanation for the correct answer.
-    """)
+
+                prompt = """
+Generate exactly 10 Multiple Choice Questions (MCQs) from the uploaded study material.
+
+Follow this format STRICTLY.
+
+Question 1:
+
+<question>
+
+A. Option 1
+B. Option 2
+C. Option 3
+D. Option 4
+
+Correct Answer:
+A
+
+Explanation:
+Write the explanation in 2-3 sentences.
+
+Repeat for all 10 questions.
+""")
                 )
-      # ================= DOUBT SOLVER =================
+notes = rag_chain.invoke(prompt)
+st.markdown(notes)
+
+                st.download_button(
+                    "⬇ Download Quiz (.md)",
+                    quiz,
+                    file_name="Quiz.md",
+                    mime="text/markdown"
+                )
+
+                st.download_button(
+                    "⬇ Download Quiz (.docx)",
+                    create_doc(quiz),
+                    file_name="Quiz.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
+
+    # ================= DOUBT SOLVER =================
+
     with tab3:
-    
-        st.subheader("💬 Doubt Solver")
-    
+
+        st.subheader("💬 AI Doubt Solver")
+
         question = st.text_input("Ask your question")
-    
+
         if st.button("Get Answer"):
-    
+
             with st.spinner("Generating Answer..."):
-    
-                st.write_stream(rag_chain.stream(question))
-      # ================= STUDY PLANNER =================
-  
+
+                answer = st.write_stream(
+                    rag_chain.stream(question)
+                )
+
+                st.download_button(
+                    "⬇ Download Answer (.md)",
+                    answer,
+                    file_name="Answer.md",
+                    mime="text/markdown"
+                )
+
+                st.download_button(
+                    "⬇ Download Answer (.docx)",
+                    create_doc(answer),
+                    file_name="Answer.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
+
+    # ================= STUDY PLANNER =================
+
     with tab4:
 
-        st.subheader("📅 Study Planner")
+        st.subheader("📅 Personalized Study Planner")
 
         subjects = st.text_input("Subjects")
 
@@ -454,6 +525,20 @@ if rag_chain:
             )
 
             st.markdown(plan)
+
+            st.download_button(
+                "⬇ Download Study Plan (.md)",
+                plan,
+                file_name="Study_Plan.md",
+                mime="text/markdown"
+            )
+
+            st.download_button(
+                "⬇ Download Study Plan (.docx)",
+                create_doc(plan),
+                file_name="Study_Plan.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
 st.divider()
 st.caption(
     "🚀 Powered by Gemini 3.5 Flash Lite | LangChain | FAISS | HuggingFace Embeddings | Streamlit"
