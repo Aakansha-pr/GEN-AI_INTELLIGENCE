@@ -153,20 +153,33 @@ def generate_quiz(rag_chain):
     from the uploaded PDF.
     """
 
-    prompt = """
-Generate a quiz from the uploaded study material.
+prompt = """
+Generate exactly 10 Multiple Choice Questions (MCQs) from the uploaded study material.
 
-Instructions:
-- Generate exactly 10 Multiple Choice Questions (MCQs).
-- Each question should have four options: in different lines:
-  A)
-  B)
-  C)
-  D)
-- Mention the correct answer after each question in next line 
-with proper spacing to look presentable
-- Provide a short explanation for the correct answer.
-- Format the output using proper headings and numbering.
+Follow this format STRICTLY.
+
+Question 1:
+<question>
+
+A. Option 1
+B. Option 2
+C. Option 3
+D. Option 4
+
+Correct Answer:
+A
+
+Explanation:
+Write the explanation in 2-3 complete sentences.
+
+Repeat the same format for all 10 questions.
+
+Rules:
+- Put every option on a separate line.
+- Leave one blank line between sections.
+- Put "Correct Answer" on a separate line.
+- Put "Explanation" on a separate line.
+- Make the output clean, readable and well-formatted using Markdown.
 """
 
     quiz = rag_chain.invoke(prompt)
