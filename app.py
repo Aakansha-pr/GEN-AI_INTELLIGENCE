@@ -205,15 +205,14 @@ def solve_doubt(rag_chain, question):
 
 # ================= STEP 13 : STUDY PLANNER =================
 
+# ================= STEP 13 : STUDY PLANNER =================
+
 def generate_study_plan(subjects, exam_date, study_hours):
-    """
-    This function generates a personalized study plan.
-    """
 
     prompt = f"""
-You are StudyGen AI, an Intelligent Learning Assistant.
+You are StudyGen AI.
 
-Create a personalized study plan using the following details:
+Create a personalized study plan.
 
 Subjects:
 {subjects}
@@ -224,28 +223,29 @@ Exam Date:
 Study Hours Per Day:
 {study_hours}
 
-Instructions:
-1. Create a day-wise study timetable.
-2. Allocate study time for each subject.
-3. Include short breaks.
-4. Reserve time for revision before the exam.
-5. Highlight high-priority subjects.
-6. Present the output using proper headings and bullet points.
+Generate the output in proper Markdown.
 
-IN DIFFERENT LINES NO MESS UP. SHOULD LOOK PRESENTABLE
+Rules:
+- Use headings.
+- Use bullet points.
+- Use tables where possible.
+- Leave blank lines between sections.
+- Do NOT return JSON.
+- Do NOT return Python objects.
+- Return only the study plan.
 """
 
-  response = model.invoke(prompt)
-  
-  if isinstance(response.content, list):
-      plan = "".join(
-          item["text"] if isinstance(item, dict) else item.text
-          for item in response.content
-      )
-  else:
-      plan = response.content
-  
-  return plan
+    response = model.invoke(prompt)
+
+    if isinstance(response.content, list):
+        plan = "".join(
+            item["text"] if isinstance(item, dict) else item.text
+            for item in response.content
+        )
+    else:
+        plan = response.content
+
+    return plan
   
 def create_doc(text):
 
