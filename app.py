@@ -153,7 +153,7 @@ def generate_quiz(rag_chain):
     from the uploaded PDF.
     """
 
-prompt = """
+    prompt = """
 Generate exactly 10 Multiple Choice Questions (MCQs) from the uploaded study material.
 
 Follow this format STRICTLY.
@@ -182,9 +182,9 @@ Rules:
 - Make the output clean, readable and well-formatted using Markdown.
 """
 
-  quiz = rag_chain.invoke(prompt)
+    quiz = rag_chain.invoke(prompt)
 
-  return quiz
+    return quiz
   
 # ================= STEP 12 : DOUBT SOLVER =================
 
