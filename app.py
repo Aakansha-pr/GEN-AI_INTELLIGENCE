@@ -249,7 +249,7 @@ def create_doc(text):
     doc.save(file)
     file.seek(0)
 
-    return file
+    return file.getvalue()
 # ============================================================
 # ============== STEP 14 : STREAMLIT USER INTERFACE ===========
 # ---------------------- PAGE TITLE -----------------------
