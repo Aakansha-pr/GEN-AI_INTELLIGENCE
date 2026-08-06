@@ -24,7 +24,6 @@ st.set_page_config(page_title = "GEN-AI INTELLIGENT LEARNING🎓",
 
 st.sidebar.title("SET API CONFIG")
 st.title("GEN-AI INTELLIGENT LEARNING💻")
-st.image("pg.png", use_container_width=True)
 
 GOOGLE_API_KEY = st.sidebar.text_input("GOOGLE_API_KEY",type = "password")
 os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
@@ -41,7 +40,7 @@ if GOOGLE_API_KEY:
     )
 else:
     st.stop()
-
+st.image("pg.png", use_container_width=True)
 # =================== STEP 3 : PDF BACKEND FUNCTIONS ===================
 def load_pdf(pdf_path):
     loader = PyPDFLoader(pdf_path)
