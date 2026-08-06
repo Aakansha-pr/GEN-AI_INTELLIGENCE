@@ -385,26 +385,26 @@ if rag_chain:
         if st.button("Generate Notes"):
 
             with st.spinner("Generating Notes..."):
-            
-                st.write_stream(
-                    rag_chain.stream("""
-            Generate well-structured study notes from the uploaded study material.
-            
-            Include the following sections:
-            
-            1. Introduction
-            2. Key Concepts
-            3. Important Definitions
-            4. Key Points
-            5. Examples (if available)
-            6. Summary
-            
-            Use simple language.
-            Format the output using headings and bullet points.
-            """)
-                )
-notes = rag_chain.invoke(prompt)
-st.markdown(notes)
+
+                prompt = """
+Generate well-structured study notes from the uploaded study material.
+
+Include the following sections:
+
+1. Introduction
+2. Key Concepts
+3. Important Definitions
+4. Key Points
+5. Examples (if available)
+6. Summary
+
+Use simple language.
+Format the output using headings and bullet points.
+"""
+
+                notes = rag_chain.invoke(prompt)
+
+                st.markdown(notes)
 
                 st.download_button(
                     "⬇ Download Notes (.md)",
@@ -451,10 +451,11 @@ Explanation:
 Write the explanation in 2-3 sentences.
 
 Repeat for all 10 questions.
-""")
-                )
-notes = rag_chain.invoke(prompt)
-st.markdown(notes)
+"""
+
+                quiz = rag_chain.invoke(prompt)
+
+                st.markdown(quiz)
 
                 st.download_button(
                     "⬇ Download Quiz (.md)",
@@ -482,9 +483,9 @@ st.markdown(notes)
 
             with st.spinner("Generating Answer..."):
 
-                answer = st.write_stream(
-                    rag_chain.stream(question)
-                )
+                answer = rag_chain.invoke(question)
+
+                st.markdown(answer)
 
                 st.download_button(
                     "⬇ Download Answer (.md)",
@@ -503,44 +504,46 @@ st.markdown(notes)
     # ================= STUDY PLANNER =================
 
     with tab4:
-    
-        st.subheader("📅 Study Planner")
-    
+
+        st.subheader("📅 Personalized Study Planner")
+
         subjects = st.text_input("Subjects")
-    
+
         exam_date = st.date_input("Exam Date")
-    
+
         study_hours = st.slider(
             "Study Hours",
             1,
             12,
             4
         )
-    
+
         if st.button("Generate Study Plan"):
-    
+
             plan = generate_study_plan(
                 subjects,
                 exam_date,
                 study_hours
             )
-    
+
             st.markdown(plan)
-    
+
             st.download_button(
                 "⬇ Download Study Plan (.md)",
                 plan,
                 file_name="Study_Plan.md",
                 mime="text/markdown"
             )
-    
+
             st.download_button(
                 "⬇ Download Study Plan (.docx)",
                 create_doc(plan),
                 file_name="Study_Plan.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
+
 st.divider()
+
 st.caption(
-    "🚀 Powered by Gemini 3.5 Flash Lite | LangChain | FAISS | HuggingFace Embeddings | Streamlit"
+    "🚀 Powered by Gemini 2.5 Flash Lite | LangChain | FAISS | HuggingFace Embeddings | Streamlit"
 )
