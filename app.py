@@ -242,9 +242,6 @@ IN DIFFERENT LINES NO MESS UP. SHOULD LOOK PRESENTABLE
 # ============================================================
 
 # ---------------------- PAGE TITLE -----------------------
-
-# ---------------------- PAGE TITLE -----------------------
-
 st.title("📚 StudyGen AI")
 st.subheader("Intelligent Learning Assistant")
 
@@ -273,6 +270,34 @@ with col3:
 
 with col4:
     st.info("📅\n\nStudy Planner")
+
+st.markdown("## 🎯 About StudyGen AI")
+
+st.write(
+  """
+StudyGen AI is an AI-powered intelligent learning assistant developed using
+Generative AI, Retrieval-Augmented Generation (RAG), LangChain, FAISS,
+HuggingFace Embeddings, and Google's Gemini model.
+
+The application helps students understand study materials more effectively by
+providing AI-powered learning assistance from uploaded PDF documents.
+
+### Key Features
+
+✔ Generate well-structured study notes
+
+✔ Create AI-powered multiple-choice quizzes
+
+✔ Ask questions directly from the uploaded PDF
+
+✔ Generate personalized study plans based on exam dates and study hours
+
+StudyGen AI reduces manual study effort, improves learning efficiency,
+and provides an interactive, personalized learning experience.
+"""
+)
+
+st.divider()
 # ==================== STEP 15 : SIDEBAR ====================
 
 st.sidebar.title("📚 StudyGen AI")
@@ -325,12 +350,20 @@ st.divider()
 
 if rag_chain:
 
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("AI Model", "Gemini")
+
+    col2.metric("Retriever", f"Top {k_value}")
+
+    col3.metric("PDF", "Loaded")
+
     tab1, tab2, tab3, tab4 = st.tabs(
         [
-            "📄 Notes",
-            "📝 Quiz",
-            "💬 Doubt Solver",
-            "📅 Study Planner"
+            "📄 Smart Notes",
+            "📝 AI Quiz Generator",
+            "💬 AI Doubt Solver",
+            "📅 Personalized Study Planner"
         ]
     )
     # ================= NOTES =================
@@ -421,3 +454,7 @@ if rag_chain:
             )
 
             st.markdown(plan)
+st.divider()
+st.caption(
+    "🚀 Powered by Gemini 3.5 Flash Lite | LangChain | FAISS | HuggingFace Embeddings | Streamlit"
+)
