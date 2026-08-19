@@ -202,9 +202,6 @@ def solve_doubt(rag_chain, question):
 
     return answer
 
-
-# ================= STEP 13 : STUDY PLANNER =================
-
 # ================= STEP 13 : STUDY PLANNER =================
 
 def generate_study_plan(subjects, exam_date, study_hours):
@@ -322,9 +319,10 @@ st.divider()
 st.sidebar.title("📚 StudyGen AI")
 st.sidebar.markdown("### Upload your study material")
 
-uploaded_file = st.sidebar.file_uploader(
-    "Choose a PDF File",
-    type=["pdf"]
+uploaded_files = st.sidebar.file_uploader(
+    "Choose PDF Files",
+    type=["pdf"],
+    accept_multiple_files=True
 )
 k_value = st.sidebar.slider(
     "Retriever Top-K",
@@ -375,29 +373,55 @@ def build_rag(pdf_path, k_value):
     vectorstore = create_vectorstore(chunks, embeddings)
     retriever = create_retriever(vectorstore, k_value)
     return create_rag_chain(retriever)
-
 rag_chain = None
-if uploaded_file is not None:
+
+if uploaded_files:
 
     save_dir = "uploaded_files"
     os.makedirs(save_dir, exist_ok=True)
 
-    pdf_path = os.path.join(save_dir, uploaded_file.name)
-    with open(pdf_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
-
     try:
-        with st.spinner("Processing PDF..."):
-            rag_chain = build_rag(pdf_path, k_value)
+        with st.spinner("Processing PDF files..."):
 
-        st.success("PDF Processed Successfully ✅")
-        st.write("RAG Chain Built Successfully")
+            all_documents = []
+            for uploaded_file in uploaded_files:
 
+                pdf_path = os.path.join(
+                    save_dir,
+                    uploaded_file.name
+                )
+                with open(pdf_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                documents = load_pdf(pdf_path)
+
+                # Add filename to metadata
+                for doc in documents:
+                    doc.metadata["source"] = uploaded_file.name
+
+                all_documents.extend(documents)
+
+            chunks = split_pdf(all_documents)
+            embeddings = create_embeddings()
+
+            vectorstore = create_vectorstore(
+                chunks,
+                embeddings
+            )
+            retriever = create_retriever(
+                vectorstore,
+                k_value
+            )
+            rag_chain = create_rag_chain(retriever)
+        st.success(
+            f"{len(uploaded_files)} PDF(s) processed successfully ✅"
+        )
     except Exception as e:
         st.exception(e)
         
 # ================= STEP 17 : SELECT FEATURE ==================
 st.divider()
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
 if rag_chain:
 
@@ -407,10 +431,11 @@ if rag_chain:
     col2.metric("Retriever", f"Top {k_value}")
     col3.metric("PDF", "Loaded")
 
-    tab1, tab2, tab3, tab4 = st.tabs(
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(
         [
             "📄 Smart Notes",
             "📝 AI Quiz Generator",
+            "🧠 Flashcards",
             "💬 AI Doubt Solver",
             "📅 Personalized Study Planner"
         ]
@@ -510,40 +535,106 @@ Repeat for all 10 questions.
                     file_name="Quiz.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 )
-
-    # ================= DOUBT SOLVER =================
+              
+# ================= FLASHCARDS =================
 
     with tab3:
-
-        st.subheader("💬 AI Doubt Solver")
-
-        question = st.text_input("Ask your question")
-
-        if st.button("Get Answer"):
-
-            with st.spinner("Generating Answer..."):
-
-                answer = rag_chain.invoke(question)
-
-                st.markdown(answer)
-
+    
+        st.subheader("🧠 AI Flashcards")
+    
+        number_of_cards = st.slider(
+            "Number of Flashcards",
+            min_value=5,
+            max_value=20,
+            value=10
+        )
+    
+        if st.button("Generate Flashcards"):
+            with st.spinner("Creating Flashcards..."):
+    
+                prompt = f"""
+    Create exactly {number_of_cards} flashcards
+    from the uploaded study material.
+    
+    Format each flashcard like this:
+    
+    Flashcard 1:
+    Question: <question>
+    Answer: <answer>
+    
+    Flashcard 2:
+    Question: <question>
+    Answer: <answer>
+    
+    Rules:
+    - Use only information from the uploaded study material.
+    - Focus on important concepts and definitions.
+    - Keep questions clear.
+    - Keep answers concise.
+    - Do not include information outside the study material.
+    """
+                flashcards = rag_chain.invoke(prompt)
+    
+                st.markdown(flashcards)
                 st.download_button(
-                    "⬇ Download Answer (.md)",
-                    answer,
-                    file_name="Answer.md",
+                    "⬇ Download Flashcards (.md)",
+                    flashcards,
+                    file_name="Flashcards.md",
                     mime="text/markdown"
                 )
-
+    
                 st.download_button(
-                    "⬇ Download Answer (.docx)",
-                    create_doc(answer),
-                    file_name="Answer.docx",
+                    "⬇ Download Flashcards (.docx)",
+                    create_doc(flashcards),
+                    file_name="Flashcards.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 )
+    # ================= DOUBT SOLVER =================
+    with tab4:
+    
+        st.subheader("💬 AI Doubt Solver")
+    
+        # Display previous messages
+        for message in st.session_state.chat_history:
+    
+            if message["role"] == "user":
+                st.markdown(f"**👤 You:** {message['content']}")
+    
+            else:
+                st.markdown(f"**🤖 StudyGen AI:** {message['content']}")
+    
+        question = st.text_input(
+            "Ask your question",
+            key="doubt_question"
+        )
+    
+        if st.button("Get Answer"):
+            if question:
+                with st.spinner("Thinking..."):
+                  
+                    answer = rag_chain.invoke(question)
+    
+                # Save user question
+                st.session_state.chat_history.append({
+                    "role": "user",
+                    "content": question
+                })
+    
+                # Save AI answer
+                st.session_state.chat_history.append({
+                    "role": "assistant",
+                    "content": answer
+                })
+    
+                st.rerun()
+        if st.button("🗑 Clear Chat"):
+    
+            st.session_state.chat_history = []
+            st.rerun()
 
     # ================= STUDY PLANNER =================
 
-    with tab4:
+    with tab5:
     
         st.subheader("📅 Personalized Study Planner")
     
