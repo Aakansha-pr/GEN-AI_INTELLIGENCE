@@ -84,6 +84,7 @@ def extract_video_id(url):
 
     return None
 
+
 def load_youtube_content(url):
 
     video_id = extract_video_id(url)
@@ -94,42 +95,86 @@ def load_youtube_content(url):
     client = genai.Client(api_key=GOOGLE_API_KEY)
 
     prompt = """
-    Analyse this 30-second section of an educational video.
+    You are StudyGen AI, an intelligent learning assistant.
 
-    Extract:
-    1. Spoken explanations.
+    Analyse this complete educational YouTube lecture.
+
+    The video may be several hours long.
+
+    Extract information from BOTH audio and visuals.
+
+    Prepare comprehensive, well-organized study material covering:
+
+    1. Complete topic-wise explanations of the lecture.
     2. Important concepts and definitions.
-    3. Visible slide text.
-    4. Diagrams, formulas and examples.
+    3. Key points and subtopics.
+    4. Important examples and case studies.
+    5. Text visible on slides and screens.
+    6. Important diagrams, charts, tables and formulas.
+    7. Step-by-step explanations of processes and algorithms.
+    8. Important timestamps for major topics.
+    9. A final summary of the lecture.
 
-    Provide detailed study notes.
-    Do not invent information.
+    Instructions:
+    - Cover the entire lecture, not just its introduction.
+    - Preserve the original meaning of the explanations.
+    - Use simple language suitable for students.
+    - Organize the content using headings and bullet points.
+    - Do not invent information.
     """
 
-    response = client.interactions.create(
+    # Start background video processing
+    interaction = client.interactions.create(
         model="gemini-3.8-flash",
         input=[
             {
                 "type": "video",
                 "uri": url,
-                "processing": {
-                    "type": "static",
-                    "start_offset": "0s",
-                    "end_offset": "30s"
-                }
+                "processing": "agentic"
             },
             {
                 "type": "text",
                 "text": prompt
             }
-        ]
+        ],
+        background=True
     )
 
-    video_text = response.output_text
+    # Poll until processing finishes
+    start_time = time.time()
+    timeout = 6 * 60 * 60
+
+    while interaction.status == "in_progress":
+
+        if time.time() - start_time > timeout:
+            raise TimeoutError(
+                "Video processing exceeded the 6-hour waiting limit."
+            )
+
+        time.sleep(10)
+
+        interaction = client.interactions.get(
+            id=interaction.id
+        )
+
+    # Check final processing status
+    if interaction.status != "completed":
+        error_details = getattr(interaction, "error", None)
+
+        raise RuntimeError(
+            f"Gemini video processing failed. "
+            f"Status: {interaction.status}. "
+            f"Details: {error_details}"
+        )
+
+    video_text = interaction.output_text
 
     if not video_text or not video_text.strip():
-        raise ValueError("Gemini could not extract video content.")
+        raise ValueError(
+            "Gemini completed processing but returned no video content."
+        )
 
+    # Convert extracted content into a LangChain document
     document = LangchainDocument(
         page_content=video_text,
         metadata={
@@ -140,7 +185,7 @@ def load_youtube_content(url):
     )
 
     return [document]
-  
+
 # =================== STEP 4 : CREATE TEXT CHUNKS ===================
 
 def split_documents(documents):
