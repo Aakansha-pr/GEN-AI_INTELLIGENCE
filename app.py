@@ -86,6 +86,7 @@ def extract_video_id(url):
 
 
 
+
 def load_youtube_content(url):
 
     video_id = extract_video_id(url)
@@ -94,73 +95,26 @@ def load_youtube_content(url):
         raise ValueError("Invalid YouTube URL.")
 
     client = genai.Client(api_key=GOOGLE_API_KEY)
-    
-    prompt = """
-      Summarize this video.
-      Identify its main topics, important concepts,
-      and examples. Include timestamps.
-      """
 
-    # Start background video processing
-    interaction = client.interactions.create(
+    response = client.interactions.create(
         model="gemini-3.8-flash",
         input=[
             {
-                "type": "video",
-                "uri": url,
-                "processing": "agentic"
+                "type": "text",
+                "text": "Summarize this video in 5 bullet points."
             },
             {
-                "type": "text",
-                "text": prompt
+                "type": "video",
+                "uri": url
             }
-        ],
-        background=True
+        ]
     )
 
-    # Wait for processing to finish
-    start_time = time.time()
-    timeout = 6 * 60 * 60
+    video_text = response.output_text
 
-    while interaction.status == "in_progress":
+    if not video_text:
+        raise ValueError("Gemini returned no video summary.")
 
-        if time.time() - start_time > timeout:
-            raise TimeoutError(
-                "Video processing exceeded the waiting limit."
-            )
-
-        time.sleep(10)
-
-        interaction = client.interactions.get(
-            id=interaction.id
-        )
-
-    # Check processing result
-    if interaction.status != "completed":
-
-        try:
-            error_details = interaction.model_dump(
-                exclude_none=False
-            )
-        except Exception:
-            error_details = str(interaction)
-
-        st.error("Gemini video processing failed.")
-        st.json(error_details)
-
-        raise RuntimeError(
-            f"Video processing status: {interaction.status}"
-        )
-
-    # Extract generated content
-    video_text = interaction.output_text
-
-    if not video_text or not video_text.strip():
-        raise ValueError(
-            "Gemini returned no video content."
-        )
-
-    # Create LangChain document
     document = LangchainDocument(
         page_content=video_text,
         metadata={
