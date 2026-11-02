@@ -483,7 +483,7 @@ An AI-powered Intelligent Learning Assistant that transforms PDF study material 
 def build_rag(pdf_path, k_value):
 
     documents = load_pdf(pdf_path)
-    chunks = split_documents(all_documents)
+    chunks = split_documents(documents)
 
     embeddings = create_embeddings()
     vectorstore = create_vectorstore(chunks, embeddings)
@@ -516,7 +516,7 @@ if uploaded_files:
 
                 all_documents.extend(documents)
 
-            chunks = split_pdf(all_documents)
+            chunks = split_documents(all_documents)
             embeddings = create_embeddings()
 
             vectorstore = create_vectorstore(
