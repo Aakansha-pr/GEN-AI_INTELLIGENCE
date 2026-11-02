@@ -95,11 +95,11 @@ def load_youtube_content(url):
 
     client = genai.Client(api_key=GOOGLE_API_KEY)
     
-  prompt = """
-    Summarize this video.
-    Identify its main topics, important concepts,
-    and examples. Include timestamps.
-    """
+    prompt = """
+      Summarize this video.
+      Identify its main topics, important concepts,
+      and examples. Include timestamps.
+      """
 
     # Start background video processing
     interaction = client.interactions.create(
