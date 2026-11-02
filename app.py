@@ -85,6 +85,7 @@ def extract_video_id(url):
     return None
 
 
+
 def load_youtube_content(url):
 
     video_id = extract_video_id(url)
@@ -97,33 +98,35 @@ def load_youtube_content(url):
     prompt = """
     Analyse this educational YouTube video for StudyGen AI.
 
-    Extract the important information from BOTH audio and visuals.
+    Extract information from BOTH audio and visuals.
 
     Include:
-    1. Detailed explanation of the spoken content.
+    1. Detailed explanation of spoken content.
     2. Important concepts and definitions.
     3. Text visible on slides and screens.
     4. Important diagrams, charts, formulas and examples.
     5. Topic-wise explanations.
     6. Timestamps wherever possible.
 
-    Make the output detailed, accurate and useful for students.
-    Do not invent information that is not present in the video.
+    Make the output detailed and useful for students.
+    Do not invent information.
     """
 
-    response = client.models.generate_content(
+    response = client.interactions.create(
         model="gemini-3.8-flash",
-        contents=types.Content(
-            parts=[
-                types.Part(
-                    file_data=types.FileData(file_uri=url)
-                ),
-                types.Part(text=prompt)
-            ]
-        )
+        input=[
+            {
+                "type": "text",
+                "text": prompt
+            },
+            {
+                "type": "video",
+                "uri": url
+            }
+        ]
     )
 
-    video_text = response.text
+    video_text = response.output_text
 
     if not video_text or not video_text.strip():
         raise ValueError("Gemini could not extract content from this video.")
