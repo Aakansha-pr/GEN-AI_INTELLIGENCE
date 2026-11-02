@@ -404,25 +404,17 @@ st.divider()
 st.sidebar.title("📚 StudyGen AI")
 st.sidebar.markdown("### Choose your study material")
 
-source_type = st.sidebar.radio(
-    "Select Learning Source",
-    ["📄 PDF Documents", "▶️ YouTube Video"]
+st.sidebar.markdown("### Choose your study material")
+
+source_type = "📄 PDF Documents"
+
+uploaded_files = st.sidebar.file_uploader(
+    "Choose PDF Files",
+    type=["pdf"],
+    accept_multiple_files=True
 )
 
-uploaded_files = None
 youtube_url = None
-
-if source_type == "📄 PDF Documents":
-
-    uploaded_files = st.sidebar.file_uploader(
-        "Choose PDF Files",
-        type=["pdf"],
-        accept_multiple_files=True
-    )
-else:
-    youtube_url = st.sidebar.text_input(
-        "Paste YouTube Video URL"
-    )
   
 k_value = st.sidebar.slider(
     "Retriever Top-K",
