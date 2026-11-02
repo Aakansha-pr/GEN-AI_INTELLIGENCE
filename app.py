@@ -138,18 +138,6 @@ def load_youtube_content(url):
     )
 
     return [document]
-
-    # Create LangChain Document
-    document = LangchainDocument(
-        page_content=transcript_text,
-        metadata={
-            "source": url,
-            "type": "YouTube Video",
-            "video_id": video_id
-        }
-    )
-
-    return [document]
   
 # =================== STEP 4 : CREATE TEXT CHUNKS ===================
 
@@ -571,17 +559,17 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 if rag_chain:
-
     col1, col2, col3 = st.columns(3)
 
     col1.metric("AI Model", "Gemini")
-col2.metric("Retriever", f"Top {k_value}")
+    col2.metric("Retriever", f"Top {k_value}")
 
-if source_type == "📄 PDF Documents":
-    col3.metric("Source", "PDF Loaded")
-else:
-    col3.metric("Source", "YouTube Loaded")
+    if source_type == "📄 PDF Documents":
+        col3.metric("Source", "PDF Loaded")
+    else:
+        col3.metric("Source", "YouTube Loaded")
 
+    # Display five learning features
     tab1, tab2, tab3, tab4, tab5 = st.tabs(
         [
             "📄 Smart Notes",
@@ -591,7 +579,6 @@ else:
             "📅 Personalized Study Planner"
         ]
     )
-
     # ================= NOTES =================
 
     with tab1:
