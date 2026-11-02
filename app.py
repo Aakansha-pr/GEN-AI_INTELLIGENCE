@@ -4,6 +4,18 @@
 # ==============STEP 1: IMPORT LIBRARIES ================
 
 import os
+import re
+import io
+import time
+import numpy
+
+import streamlit as st
+
+from PIL import Image
+from dotenv import load_dotenv
+from docx import Document
+
+# LangChain imports
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
@@ -12,13 +24,10 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-import streamlit as st
-import numpy
-import time
-from PIL import Image
-from dotenv import load_dotenv
-from docx import Document
-import io
+from langchain_core.documents import Document as LangchainDocument
+
+# YouTube Transcript
+from youtube_transcript_api import YouTubeTranscriptApi
 
 #====================STEP 2 API KEYS======================
 st.set_page_config(page_title = "GEN-AI INTELLIGENT LEARNING🎓",
@@ -44,10 +53,51 @@ else:
     st.stop()
 
 # =================== STEP 3 : PDF BACKEND FUNCTIONS ===================
+# loading pdf
 def load_pdf(pdf_path):
     loader = PyPDFLoader(pdf_path)
     documents = loader.load()
     return documents
+
+# youtube link video
+
+def extract_video_id(url):
+    patterns = [
+        r"(?:v=)([^&]+)",
+        r"youtu\.be/([^?&]+)",
+        r"youtube\.com/embed/([^?&]+)"
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+
+    return None
+
+
+def load_youtube_transcript(url):
+
+    video_id = extract_video_id(url)
+
+    if not video_id:
+        raise ValueError("Invalid YouTube URL.")
+
+    transcript = YouTubeTranscriptApi.get_transcript(video_id)
+
+    transcript_text = " ".join(
+        item["text"] for item in transcript
+    )
+
+    document = LangchainDocument(
+        page_content=transcript_text,
+        metadata={
+            "source": url,
+            "type": "YouTube Video"
+        }
+    )
+
+    return [document]
   
 # =================== STEP 4 : CREATE TEXT CHUNKS ===================
 def split_pdf(documents):
@@ -317,13 +367,28 @@ st.divider()
 # ==================== STEP 15 : SIDEBAR ====================
 
 st.sidebar.title("📚 StudyGen AI")
-st.sidebar.markdown("### Upload your study material")
+st.sidebar.markdown("### Choose your study material")
 
-uploaded_files = st.sidebar.file_uploader(
-    "Choose PDF Files",
-    type=["pdf"],
-    accept_multiple_files=True
+source_type = st.sidebar.radio(
+    "Select Learning Source",
+    ["📄 PDF Documents", "▶️ YouTube Video"]
 )
+
+uploaded_files = None
+youtube_url = None
+
+if source_type == "📄 PDF Documents":
+
+    uploaded_files = st.sidebar.file_uploader(
+        "Choose PDF Files",
+        type=["pdf"],
+        accept_multiple_files=True
+    )
+else:
+    youtube_url = st.sidebar.text_input(
+        "Paste YouTube Video URL"
+    )
+  
 k_value = st.sidebar.slider(
     "Retriever Top-K",
     min_value=1,
@@ -417,6 +482,37 @@ if uploaded_files:
         )
     except Exception as e:
         st.exception(e)
+
+# ================= PROCESS YOUTUBE VIDEO =================
+
+if youtube_url:
+
+    try:
+        with st.spinner("Processing YouTube video..."):
+
+            documents = load_youtube_transcript(youtube_url)
+
+            chunks = split_pdf(documents)
+
+            embeddings = create_embeddings()
+
+            vectorstore = create_vectorstore(
+                chunks,
+                embeddings
+            )
+
+            retriever = create_retriever(
+                vectorstore,
+                k_value
+            )
+
+            rag_chain = create_rag_chain(retriever)
+
+        st.success("YouTube video processed successfully ✅")
+
+    except Exception as e:
+        st.error("Could not process this YouTube video.")
+        st.exception(e)
         
 # ================= STEP 17 : SELECT FEATURE ==================
 st.divider()
@@ -428,8 +524,12 @@ if rag_chain:
     col1, col2, col3 = st.columns(3)
 
     col1.metric("AI Model", "Gemini")
-    col2.metric("Retriever", f"Top {k_value}")
-    col3.metric("PDF", "Loaded")
+col2.metric("Retriever", f"Top {k_value}")
+
+if source_type == "📄 PDF Documents":
+    col3.metric("Source", "PDF Loaded")
+else:
+    col3.metric("Source", "YouTube Loaded")
 
     tab1, tab2, tab3, tab4, tab5 = st.tabs(
         [
