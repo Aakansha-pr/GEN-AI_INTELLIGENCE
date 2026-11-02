@@ -331,6 +331,7 @@ def create_doc(text):
     file.seek(0)
 
     return file.getvalue()
+  
 # ============================================================
 # ============== STEP 14 : STREAMLIT USER INTERFACE ===========
 # ---------------------- PAGE TITLE -----------------------
@@ -349,7 +350,10 @@ st.image("pg.png", use_container_width=True)
 st.divider()
 st.markdown("## ✨ Features")
 
-col1, col2, col3, col4 = st.columns(4)
+
+# ================= HOME PAGE FEATURES =================
+
+col1, col2, col3 = st.columns(3)
 
 with col1:
     st.info("📄\n\nGenerate Notes")
@@ -358,9 +362,14 @@ with col2:
     st.info("📝\n\nGenerate Quiz")
 
 with col3:
-    st.info("💬\n\nSolve Doubts")
+    st.info("🧠\n\nFlashcards")
+
+col4, col5 = st.columns(2)
 
 with col4:
+    st.info("💬\n\nSolve Doubts")
+
+with col5:
     st.info("📅\n\nStudy Planner")
 
 st.markdown("## 🎯 About StudyGen AI")
