@@ -28,6 +28,7 @@ from langchain_core.documents import Document as LangchainDocument
 
 # YouTube Transcript
 from youtube_transcript_api import YouTubeTranscriptApi
+from urllib.parse import urlparse, parse_qs
 
 #====================STEP 2 API KEYS======================
 st.set_page_config(page_title = "GEN-AI INTELLIGENT LEARNING🎓",
@@ -59,19 +60,26 @@ def load_pdf(pdf_path):
     documents = loader.load()
     return documents
 
-# youtube link video
+# YOUTUBE VIDEO FUNCTIONS 
 
 def extract_video_id(url):
-    patterns = [
-        r"(?:v=)([^&]+)",
-        r"youtu\.be/([^?&]+)",
-        r"youtube\.com/embed/([^?&]+)"
-    ]
 
-    for pattern in patterns:
-        match = re.search(pattern, url)
-        if match:
-            return match.group(1)
+    parsed_url = urlparse(url.strip())
+
+    if parsed_url.hostname in ["youtu.be", "www.youtu.be"]:
+        return parsed_url.path.lstrip("/").split("/")[0]
+
+    if parsed_url.hostname in [
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com"
+    ]:
+
+        if parsed_url.path == "/watch":
+            return parse_qs(parsed_url.query).get("v", [None])[0]
+
+        if parsed_url.path.startswith(("/embed/", "/shorts/", "/live/")):
+            return parsed_url.path.split("/")[2]
 
     return None
 
@@ -83,27 +91,33 @@ def load_youtube_transcript(url):
     if not video_id:
         raise ValueError("Invalid YouTube URL.")
 
-    transcript = YouTubeTranscriptApi.get_transcript(video_id)
+    # Fetch transcript
+    transcript = YouTubeTranscriptApi().fetch(video_id)
 
+    # Extract text
     transcript_text = " ".join(
-        item["text"] for item in transcript
+        snippet.text for snippet in transcript
     )
 
+    if not transcript_text.strip():
+        raise ValueError("No transcript available.")
+
+    # Create LangChain Document
     document = LangchainDocument(
         page_content=transcript_text,
         metadata={
             "source": url,
-            "type": "YouTube Video"
+            "type": "YouTube Video",
+            "video_id": video_id
         }
     )
 
     return [document]
   
 # =================== STEP 4 : CREATE TEXT CHUNKS ===================
-def split_pdf(documents):
-    """
-    This function splits PDF into smaller text chunks.
-    """
+
+def split_documents(documents):
+
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200
@@ -432,7 +446,7 @@ An AI-powered Intelligent Learning Assistant that transforms PDF study material 
 def build_rag(pdf_path, k_value):
 
     documents = load_pdf(pdf_path)
-    chunks = split_pdf(documents)
+    chunks = split_documents(all_documents)
 
     embeddings = create_embeddings()
     vectorstore = create_vectorstore(chunks, embeddings)
@@ -492,7 +506,7 @@ if youtube_url:
 
             documents = load_youtube_transcript(youtube_url)
 
-            chunks = split_pdf(documents)
+            chunks = split_documents(documents)
 
             embeddings = create_embeddings()
 
