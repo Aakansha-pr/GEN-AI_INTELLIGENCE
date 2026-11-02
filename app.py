@@ -157,15 +157,21 @@ def load_youtube_content(url):
             id=interaction.id
         )
 
-    # Check final processing status
-    if interaction.status != "completed":
-        error_details = getattr(interaction, "error", None)
+if interaction.status != "completed":
 
-        raise RuntimeError(
-            f"Gemini video processing failed. "
-            f"Status: {interaction.status}. "
-            f"Details: {error_details}"
+    try:
+        error_details = interaction.model_dump(
+            exclude_none=False
         )
+    except Exception:
+        error_details = str(interaction)
+
+    st.error("Gemini returned a failed video-processing interaction.")
+    st.json(error_details)
+
+    raise RuntimeError(
+        f"Video processing status: {interaction.status}"
+    )
 
     video_text = interaction.output_text
 
