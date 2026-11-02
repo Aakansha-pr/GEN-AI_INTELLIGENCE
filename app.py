@@ -9,6 +9,8 @@ import io
 import time
 import numpy
 
+from google import genai
+from google.genai import types
 import streamlit as st
 
 from PIL import Image
@@ -26,8 +28,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.documents import Document as LangchainDocument
 
-# YouTube Transcript
-from youtube_transcript_api import YouTubeTranscriptApi
+# YouTube
 from urllib.parse import urlparse, parse_qs
 
 #====================STEP 2 API KEYS======================
@@ -84,23 +85,59 @@ def extract_video_id(url):
     return None
 
 
-def load_youtube_transcript(url):
+def load_youtube_content(url):
 
     video_id = extract_video_id(url)
 
     if not video_id:
         raise ValueError("Invalid YouTube URL.")
 
-    # Fetch transcript
-    transcript = YouTubeTranscriptApi().fetch(video_id)
+    client = genai.Client(api_key=GOOGLE_API_KEY)
 
-    # Extract text
-    transcript_text = " ".join(
-        snippet.text for snippet in transcript
+    prompt = """
+    Analyse this educational YouTube video for StudyGen AI.
+
+    Extract the important information from BOTH audio and visuals.
+
+    Include:
+    1. Detailed explanation of the spoken content.
+    2. Important concepts and definitions.
+    3. Text visible on slides and screens.
+    4. Important diagrams, charts, formulas and examples.
+    5. Topic-wise explanations.
+    6. Timestamps wherever possible.
+
+    Make the output detailed, accurate and useful for students.
+    Do not invent information that is not present in the video.
+    """
+
+    response = client.models.generate_content(
+        model="gemini-3.8-flash",
+        contents=types.Content(
+            parts=[
+                types.Part(
+                    file_data=types.FileData(file_uri=url)
+                ),
+                types.Part(text=prompt)
+            ]
+        )
     )
 
-    if not transcript_text.strip():
-        raise ValueError("No transcript available.")
+    video_text = response.text
+
+    if not video_text or not video_text.strip():
+        raise ValueError("Gemini could not extract content from this video.")
+
+    document = LangchainDocument(
+        page_content=video_text,
+        metadata={
+            "source": url,
+            "type": "YouTube Video",
+            "video_id": video_id
+        }
+    )
+
+    return [document]
 
     # Create LangChain Document
     document = LangchainDocument(
@@ -504,7 +541,7 @@ if youtube_url:
     try:
         with st.spinner("Processing YouTube video..."):
 
-            documents = load_youtube_transcript(youtube_url)
+            documents = load_youtube_content(youtube_url)
 
             chunks = split_documents(documents)
 
