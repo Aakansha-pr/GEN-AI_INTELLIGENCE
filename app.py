@@ -84,8 +84,6 @@ def extract_video_id(url):
 
     return None
 
-
-
 def load_youtube_content(url):
 
     video_id = extract_video_id(url)
@@ -96,19 +94,15 @@ def load_youtube_content(url):
     client = genai.Client(api_key=GOOGLE_API_KEY)
 
     prompt = """
-    Analyse this educational YouTube video for StudyGen AI.
+    Analyse this 30-second section of an educational video.
 
-    Extract information from BOTH audio and visuals.
-
-    Include:
-    1. Detailed explanation of spoken content.
+    Extract:
+    1. Spoken explanations.
     2. Important concepts and definitions.
-    3. Text visible on slides and screens.
-    4. Important diagrams, charts, formulas and examples.
-    5. Topic-wise explanations.
-    6. Timestamps wherever possible.
+    3. Visible slide text.
+    4. Diagrams, formulas and examples.
 
-    Make the output detailed and useful for students.
+    Provide detailed study notes.
     Do not invent information.
     """
 
@@ -116,12 +110,17 @@ def load_youtube_content(url):
         model="gemini-3.8-flash",
         input=[
             {
-                "type": "text",
-                "text": prompt
+                "type": "video",
+                "uri": url,
+                "processing": {
+                    "type": "static",
+                    "start_offset": "0s",
+                    "end_offset": "30s"
+                }
             },
             {
-                "type": "video",
-                "uri": url
+                "type": "text",
+                "text": prompt
             }
         ]
     )
@@ -129,7 +128,7 @@ def load_youtube_content(url):
     video_text = response.output_text
 
     if not video_text or not video_text.strip():
-        raise ValueError("Gemini could not extract content from this video.")
+        raise ValueError("Gemini could not extract video content.")
 
     document = LangchainDocument(
         page_content=video_text,
