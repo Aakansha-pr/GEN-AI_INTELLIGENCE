@@ -94,28 +94,11 @@ def load_youtube_content(url):
         raise ValueError("Invalid YouTube URL.")
 
     client = genai.Client(api_key=GOOGLE_API_KEY)
-
-    prompt = """
-    You are StudyGen AI, an intelligent learning assistant.
-
-    Analyse this complete educational YouTube lecture.
-
-    Extract information from BOTH audio and visuals.
-
-    Include:
-    1. Topic-wise explanations.
-    2. Important concepts and definitions.
-    3. Key points and subtopics.
-    4. Examples and case studies.
-    5. Visible slide text.
-    6. Diagrams, charts, tables and formulas.
-    7. Step-by-step explanations.
-    8. Important timestamps.
-    9. Final lecture summary.
-
-    Cover the entire lecture.
-    Use simple language and structured headings.
-    Do not invent information.
+    
+  prompt = """
+    Summarize this video.
+    Identify its main topics, important concepts,
+    and examples. Include timestamps.
     """
 
     # Start background video processing
