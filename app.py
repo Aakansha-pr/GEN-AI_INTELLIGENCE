@@ -404,8 +404,6 @@ st.divider()
 st.sidebar.title("📚 StudyGen AI")
 st.sidebar.markdown("### Choose your study material")
 
-st.sidebar.markdown("### Choose your study material")
-
 source_type = "📄 PDF Documents"
 
 uploaded_files = st.sidebar.file_uploader(
