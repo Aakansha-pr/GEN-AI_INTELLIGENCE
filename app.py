@@ -85,6 +85,7 @@ def extract_video_id(url):
     return None
 
 
+
 def load_youtube_content(url):
 
     video_id = extract_video_id(url)
@@ -99,28 +100,22 @@ def load_youtube_content(url):
 
     Analyse this complete educational YouTube lecture.
 
-    The video may be several hours long.
-
     Extract information from BOTH audio and visuals.
 
-    Prepare comprehensive, well-organized study material covering:
-
-    1. Complete topic-wise explanations of the lecture.
+    Include:
+    1. Topic-wise explanations.
     2. Important concepts and definitions.
     3. Key points and subtopics.
-    4. Important examples and case studies.
-    5. Text visible on slides and screens.
-    6. Important diagrams, charts, tables and formulas.
-    7. Step-by-step explanations of processes and algorithms.
-    8. Important timestamps for major topics.
-    9. A final summary of the lecture.
+    4. Examples and case studies.
+    5. Visible slide text.
+    6. Diagrams, charts, tables and formulas.
+    7. Step-by-step explanations.
+    8. Important timestamps.
+    9. Final lecture summary.
 
-    Instructions:
-    - Cover the entire lecture, not just its introduction.
-    - Preserve the original meaning of the explanations.
-    - Use simple language suitable for students.
-    - Organize the content using headings and bullet points.
-    - Do not invent information.
+    Cover the entire lecture.
+    Use simple language and structured headings.
+    Do not invent information.
     """
 
     # Start background video processing
@@ -140,7 +135,7 @@ def load_youtube_content(url):
         background=True
     )
 
-    # Poll until processing finishes
+    # Wait for processing to finish
     start_time = time.time()
     timeout = 6 * 60 * 60
 
@@ -148,7 +143,7 @@ def load_youtube_content(url):
 
         if time.time() - start_time > timeout:
             raise TimeoutError(
-                "Video processing exceeded the 6-hour waiting limit."
+                "Video processing exceeded the waiting limit."
             )
 
         time.sleep(10)
@@ -157,30 +152,32 @@ def load_youtube_content(url):
             id=interaction.id
         )
 
-if interaction.status != "completed":
+    # Check processing result
+    if interaction.status != "completed":
 
-    try:
-        error_details = interaction.model_dump(
-            exclude_none=False
+        try:
+            error_details = interaction.model_dump(
+                exclude_none=False
+            )
+        except Exception:
+            error_details = str(interaction)
+
+        st.error("Gemini video processing failed.")
+        st.json(error_details)
+
+        raise RuntimeError(
+            f"Video processing status: {interaction.status}"
         )
-    except Exception:
-        error_details = str(interaction)
 
-    st.error("Gemini returned a failed video-processing interaction.")
-    st.json(error_details)
-
-    raise RuntimeError(
-        f"Video processing status: {interaction.status}"
-    )
-
+    # Extract generated content
     video_text = interaction.output_text
 
     if not video_text or not video_text.strip():
         raise ValueError(
-            "Gemini completed processing but returned no video content."
+            "Gemini returned no video content."
         )
 
-    # Convert extracted content into a LangChain document
+    # Create LangChain document
     document = LangchainDocument(
         page_content=video_text,
         metadata={
